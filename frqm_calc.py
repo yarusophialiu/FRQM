@@ -46,7 +46,7 @@ def read_images(root_path, seq_name, fps_h, fps_l, start_idx, end_idx):
     return np.array(video_hfr), np.array(video_lfr)
 
 
-def temporal_upsample(frames_lfr, test_fps, ref_fps, reference_vidr_frames):
+def temporal_upsample(frames_lfr, test_fps, ref_fps, reference_vidr_frames, max_fps):
     """
     Returns temporally nearest-neighbour upsampled version of the LFR test video,
     with number of frames equal to the reference HFR video.
@@ -59,7 +59,6 @@ def temporal_upsample(frames_lfr, test_fps, ref_fps, reference_vidr_frames):
     num_frames, H, W = frames_lfr.shape
 
     # ====================== from cvvdp ======================
-    max_fps = 166
     if test_fps % 1 == 0 and ref_fps % 1 == 0:
         gcd = math.gcd(int(test_fps),int(ref_fps))
         number1 = test_fps * ref_fps/gcd
@@ -70,8 +69,12 @@ def temporal_upsample(frames_lfr, test_fps, ref_fps, reference_vidr_frames):
 
     frames_resampled = min( int(num_frames * resample_fps/test_fps ), int( reference_vidr_frames * resample_fps/ref_fps ) )
     print(f'frames_resampled {frames_resampled}')
+    #  NOTE that frames_resampled is calculated correctly (277) for max fps 166 but inaccurate for fps 120
+    # so manually change frames_resampled to 201 if reference fps is 120
+
     # return F.interpolate(torch.Tensor(frames_lfr[None,None,...]), size=(ds*num_frames, H, W), mode='nearest').numpy()[0,0]
     return F.interpolate(torch.Tensor(frames_lfr[None,None,...]), size=(frames_resampled, H, W), mode='nearest').numpy()[0,0]
+    # return F.interpolate(torch.Tensor(frames_lfr[None,None,...]), size=(201, H, W), mode='nearest').numpy()[0,0]
 
 
 
